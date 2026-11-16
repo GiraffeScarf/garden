@@ -636,3 +636,154 @@ a:hover { color: var(--flight-secondary); }
 .night-yoke-cursor svg { display:block; width:75px; height:81px; transform-origin:50% 45%; will-change:transform; }
 .night-yoke-cursor span { display:block; border-radius:4px; background:rgba(4,18,37,.90); border:1px solid rgba(115,182,230,.60); padding:3px 5px; white-space:nowrap; font:700 9px/1.2 ui-monospace,Consolas,monospace; letter-spacing:.08em; }
 @media (max-width:767px) { .night-yoke-cursor svg { width:60px; height:66px; } .night-yoke-cursor span { font-size:8px; } }
+
+/* ============ V15: adaptive touch flight deck ============ */
+.radar-mobile-bar,.radar-mobile-close,.night-motion-tools,.night-touch-stick{display:none}
+.radar-mobile-bar button,.radar-mobile-site,.radar-mobile-close,.night-motion-tools button {
+  cursor:pointer;touch-action:manipulation;font:700 11px/1.25 ui-monospace,Consolas,monospace;
+  border:1px solid #4eaa72;border-radius:7px;color:#d7ffe1;background:rgba(4,29,12,.94);
+  padding:11px 13px;text-decoration:none;
+}
+.night-motion-tools button{background:#102c45;border-color:#568ab5;color:#e0f4ff}
+.night-motion-tools button:disabled{opacity:.45;cursor:default}
+.night-touch-stick{touch-action:none;user-select:none;-webkit-user-select:none}
+
+/* iPads including landscape, and phone-size touchscreens. Keep the scope
+   unobscured until the controller opens the temporary controls drawer. */
+@media (max-width: 1024px) {
+  :root[data-flight-theme="radar"] #home{touch-action:none;cursor:default}
+  :root[data-flight-theme="radar"] #home .intro{display:none!important}
+  :root[data-flight-theme="night"] #home .intro{display:none!important}
+  :root[data-flight-theme="radar"] .radar-mobile-bar{
+    display:flex;position:absolute;z-index:24;bottom:calc(72px + env(safe-area-inset-bottom));
+    left:12px;gap:7px;align-items:center;max-width:calc(100% - 24px)
+  }
+  .radar-mobile-bar button{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .radar-mobile-site{border-color:#28533c;font-size:10px;white-space:nowrap}
+  :root[data-flight-theme="radar"] .radar-console {
+    display:none;position:absolute;inset:auto 8px calc(128px + env(safe-area-inset-bottom)) 8px;
+    width:auto;max-width:420px;max-height:min(62dvh,580px);margin:0 auto;
+    padding:14px 16px;overflow-y:auto;overscroll-behavior:contain;
+    border:1px solid #64ad79;border-radius:12px;background:rgba(1,18,7,.98);
+    box-shadow:0 15px 50px #000d;z-index:30;
+  }
+  :root[data-flight-theme="radar"] .radar-console.mobile-open{display:block}
+  :root[data-flight-theme="radar"] .radar-mobile-close {
+    display:block;position:sticky;top:0;float:right;z-index:2;
+    border-color:#4b925b;min-width:40px;min-height:40px;font-size:24px;padding:2px 7px;
+  }
+  :root[data-flight-theme="radar"] .radar-console button:not(.radar-mobile-close){min-height:43px;font-size:11px}
+  :root[data-flight-theme="radar"] .radar-footnote{display:block;font-size:9px;margin-top:7px}
+  :root[data-flight-theme="radar"] .radar-values{margin:10px 0}
+  :root[data-flight-theme="radar"] .radar-altitude{padding:10px 6px}
+  :root[data-flight-theme="radar"] .radar-comms{padding:9px;font-size:10px}
+  .theme-console{z-index:25}
+  :root[data-flight-theme="radar"] .theme-console,
+  :root[data-flight-theme="night"] .theme-console {
+    bottom:calc(9px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    padding:7px 10px;max-width:calc(100% - 20px)
+  }
+  :root[data-flight-theme="radar"] .theme-key,
+  :root[data-flight-theme="night"] .theme-key{min-height:39px;padding:7px 12px}
+  :root[data-flight-theme="night"] #home{cursor:default}
+  :root[data-flight-theme="night"] .night-motion-tools {
+    display:flex;align-items:center;flex-wrap:wrap;gap:5px;position:absolute;right:10px;
+    top:calc(43px + env(safe-area-inset-top));z-index:26;
+    max-width:min(280px,calc(100% - 130px));padding:6px;border-radius:9px;
+    background:rgba(3,18,38,.9);color:#d7eeff;border:1px solid #486e8d;
+  }
+  .night-motion-tools button{padding:8px 9px;min-height:39px;font-size:9px}
+  .night-motion-tools span{display:block;flex-basis:100%;font:600 9px/1.3 ui-monospace,monospace;color:#bddcf4}
+  :root[data-flight-theme="night"] .night-touch-stick {
+    display:block;position:absolute;z-index:24;left:13px;top:35%;width:106px;height:106px;
+    border-radius:50%;border:2px solid #81b5dd;background:radial-gradient(circle,rgba(47,96,141,.35),rgba(6,22,43,.87));
+    box-shadow:0 0 21px #07172f90,inset 0 0 22px #173e5d;cursor:grab;
+  }
+  .night-stick-cross{position:absolute;inset:0;border-radius:50%;
+    background:linear-gradient(transparent calc(50% - .5px),#83b7da66 50%,transparent calc(50% + .5px)),
+      linear-gradient(90deg,transparent calc(50% - .5px),#83b7da66 50%,transparent calc(50% + .5px));pointer-events:none}
+  .night-stick-knob{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:35px;height:35px;border-radius:50%;background:radial-gradient(circle at 35% 27%,#bcdff8,#395f82 70%,#152f49);border:2px solid #d0edff;
+    box-shadow:0 4px 12px #000a;pointer-events:none}
+  .night-stick-label{display:block;position:absolute;top:calc(100% + 5px);left:0;width:100%;text-align:center;
+    font:600 9px ui-monospace,monospace;color:#d0ebff;pointer-events:none;text-shadow:0 2px 5px black}
+  :root[data-flight-theme="night"] .night-console {
+    display:block;position:absolute;z-index:9;top:auto;right:8px;bottom:calc(66px + env(safe-area-inset-bottom));
+    width:clamp(140px,27vw,194px);min-width:0;max-width:none;max-height:36vh;padding:7px;
+    overflow:hidden;pointer-events:auto;font-size:8px;line-height:1.2;background:rgba(3,15,33,.90)
+  }
+  :root[data-flight-theme="night"] .night-console #night-altitude{font-size:12px}
+  :root[data-flight-theme="night"] .night-console #night-papi,
+  :root[data-flight-theme="night"] .night-console #night-localizer,
+  :root[data-flight-theme="night"] .night-console #night-glideslope,
+  :root[data-flight-theme="night"] .night-console .night-control-help{display:none}
+  :root[data-flight-theme="night"] .night-console button{min-height:35px;margin-top:6px}
+  :root[data-flight-theme="night"] .approach-instrument {
+    position:absolute;z-index:11;left:50%;transform:translateX(-50%);
+    bottom:calc(64px + env(safe-area-inset-bottom));width:210px;min-width:0;
+    max-width:45vw;padding:7px;max-height:calc(100% - 160px);overflow:hidden;
+  }
+  .approach-instrument-face{width:clamp(90px,12vw,120px);height:clamp(90px,12vw,120px)}
+  .approach-instrument-title{font-size:8px}
+  .approach-instrument-readout{font-size:7px;line-height:1.2;gap:4px}
+  .approach-controls-display{gap:4px;margin-bottom:5px}
+  .flight-control-row > span:first-child{font-size:7px}
+  .flight-control-axis{font-size:6px}
+  :root[data-flight-theme="night"] .night-yoke-cursor{display:none!important}
+}
+/* Very small phones: keep all controls reachable, not layered over the runway. */
+@media (max-width: 560px) {
+  :root[data-flight-theme="night"] .night-motion-tools{max-width:calc(100% - 124px);right:6px;top:38px}
+  :root[data-flight-theme="night"] .night-motion-tools button{padding:6px;min-height:32px;font-size:8px}
+  :root[data-flight-theme="night"] .night-motion-tools span{font-size:8px}
+  :root[data-flight-theme="night"] .night-touch-stick{top:27%;left:8px;width:88px;height:88px}
+  :root[data-flight-theme="night"] .night-console{right:5px;bottom:calc(65px + env(safe-area-inset-bottom));width:120px;font-size:7px}
+  :root[data-flight-theme="night"] .night-console span{margin-top:3px}
+  :root[data-flight-theme="night"] .night-console #night-approach-state{font-size:7px}
+  :root[data-flight-theme="night"] .approach-instrument{width:142px;max-width:none;bottom:calc(68px + env(safe-area-inset-bottom));padding:5px}
+  :root[data-flight-theme="night"] .approach-instrument-face{width:83px;height:83px}
+  :root[data-flight-theme="night"] .approach-instrument-title{font-size:7px;letter-spacing:0}
+  :root[data-flight-theme="night"] .approach-instrument-readout{font-size:6px}
+  :root[data-flight-theme="night"] .night-papi-lights{display:none}
+  .flight-control-row > span:first-child{font-size:6px}
+  .flight-control-axis{display:none}
+  :root[data-flight-theme="radar"] .radar-mobile-bar{bottom:calc(69px + env(safe-area-inset-bottom));left:7px}
+  :root[data-flight-theme="radar"] .radar-mobile-bar button,
+  :root[data-flight-theme="radar"] .radar-mobile-site{padding:9px;font-size:10px}
+  :root[data-flight-theme="radar"] .radar-console{bottom:calc(116px + env(safe-area-inset-bottom));max-height:65dvh}
+}
+@media (max-height: 600px) and (max-width:1024px) {
+  :root[data-flight-theme="night"] .night-touch-stick{top:29%;width:79px;height:79px}
+  :root[data-flight-theme="night"] .night-motion-tools span{display:none}
+  :root[data-flight-theme="night"] .approach-instrument{bottom:calc(60px + env(safe-area-inset-bottom));padding:4px}
+  :root[data-flight-theme="night"] .approach-instrument-face{width:70px;height:70px}
+  :root[data-flight-theme="night"] .night-console{bottom:calc(60px + env(safe-area-inset-bottom));max-height:33vh}
+  :root[data-flight-theme="radar"] .radar-console{max-height:64dvh}
+}
+
+/* Final mobile spacing: status at upper right, ILS at the bottom centre.
+   Never allow the Night status panel to cover the CDI/glideslope indicator. */
+@media (max-width:1024px) {
+  :root[data-flight-theme="night"] .night-console {
+    top:calc(132px + env(safe-area-inset-top));bottom:auto;right:8px;
+    max-height:170px;max-width:200px;
+  }
+  :root[data-flight-theme="radar"] .radar-mobile-bar {
+    bottom:calc(91px + env(safe-area-inset-bottom));
+  }
+}
+@media (max-width:560px) {
+  :root[data-flight-theme="night"] .night-console {
+    top:calc(110px + env(safe-area-inset-top));bottom:auto;right:6px;
+    width:116px;max-height:150px;
+  }
+  :root[data-flight-theme="radar"] .radar-mobile-bar {
+    bottom:calc(92px + env(safe-area-inset-bottom));
+  }
+}
+@media (max-width:1024px) and (max-height:600px) {
+  :root[data-flight-theme="night"] .night-console {
+    top:calc(107px + env(safe-area-inset-top));bottom:auto;
+    max-height:120px;
+  }
+}

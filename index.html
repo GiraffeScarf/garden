@@ -82,7 +82,12 @@
 			</div>
 		</div>
 		<div class="top-status" aria-hidden="true"><span>AL / INTERACTIVE FLIGHT DECK</span><span id="environment-label">DAY VFR · CLEAR SKIES</span></div>
-		<div class="radar-console" aria-label="Radar vectoring simulator controls">
+		<div class="radar-mobile-bar" aria-label="Radar mobile controls">
+            <button type="button" id="radar-mobile-toggle" aria-expanded="false" aria-controls="radar-controls-panel">☰ ATC · <span id="radar-mobile-selected">SELECT TRACK</span></button>
+            <a href="#services" class="radar-mobile-site">↓ SITE</a>
+        </div>
+        <div id="radar-controls-panel" class="radar-console" aria-label="Radar vectoring simulator controls">
+            <button type="button" id="radar-mobile-close" class="radar-mobile-close" aria-label="Close ATC controls">×</button>
 			<div class="radar-panel-title"><span class="radar-led"></span> ATC / VECTOR DESK <small>SIMULATED TRAFFIC</small></div>
 			<div class="radar-values"><div><span>SELECTED TRACK</span><strong id="tracked-callsign">— — —</strong></div><div><span>INCIDENTS / ALERTS</span><strong><span id="radar-incidents">0</span><small> / </small><span id="radar-alert-count">00</span></strong></div></div>
             <div class="radar-altitude"><span id="radar-altitude-label">SELECT A TRACK TO CHANGE ALTITUDE</span><div class="radar-alt-controls"><button id="radar-descend" type="button" disabled>▼ -1,000 FT</button><button id="radar-climb" type="button" disabled>▲ +1,000 FT</button></div></div>
@@ -95,6 +100,15 @@
 			<div class="radar-footnote">DRAG TO VECTOR (FIRST 1CM = MIN SPD) · FL030 + 5 NM → TOWER · EDGE → NEXT SECTOR · 2 INCIDENTS = GAME OVER</div>
 		</div>
 		<div class="night-console" aria-live="off"><span>✦ RWY 27 · NIGHT APPROACH</span><span id="night-altitude">2,600 FT · IMC</span><span id="night-approach-state">DESCENDING THROUGH CLOUD</span><span class="night-papi-lights" id="night-papi-lights" aria-hidden="true"></span><span id="night-papi">PAPI  2 WHITE / 2 RED · ON GLIDEPATH</span><span id="night-localizer">LOCALIZER · CENTRED</span><span id="night-glideslope">GLIDESLOPE · ON PROFILE</span><span class="night-control-help">MOUSE ↑ SLOWER DESCENT · ↓ FASTER · ← → STEER</span><button type="button" id="night-restart">↻ RESTART APPROACH</button></div>
+        <div class="night-motion-tools" role="group" aria-label="Phone and tablet flight controls">
+            <button type="button" id="night-tilt-enable" aria-pressed="false">ENABLE TILT</button>
+            <button type="button" id="night-tilt-calibrate" disabled>RECENTRE</button>
+            <span id="night-motion-status" role="status" aria-live="polite">Touch joystick available · tilt requires permission</span>
+        </div>
+        <div class="night-touch-stick" id="night-touch-stick" aria-label="Touch flight control: drag the stick to steer and adjust descent rate" role="group">
+            <div class="night-stick-cross" aria-hidden="true"></div><div class="night-stick-knob" id="night-stick-knob" aria-hidden="true"></div>
+            <span class="night-stick-label">TOUCH YOKE</span>
+        </div>
 		<div class="approach-instrument" id="approach-instrument" aria-hidden="true"><div class="approach-instrument-title">ILS 27 · LOCALIZER / GLIDESLOPE</div>
             <div class="approach-controls-display" aria-label="Live aircraft control indications">
               <div class="flight-control-row"><span id="night-steer-output">WINGS LEVEL</span><div class="flight-control-bar"><span class="flight-control-marker" id="night-steer-marker"></span></div><div class="flight-control-axis"><span>◀ LEFT</span><span>RIGHT ▶</span></div></div>

@@ -20,7 +20,7 @@
     const angleError = (to, from) => ((to - from + 540) % 360) - 180;
     const themeKeys = { a: 'sky', s: 'radar', d: 'night' };
     const validThemes = new Set(Object.values(themeKeys));
-    const TRAFFIC_RATE = 0.85;
+    const TRAFFIC_RATE = 0.35; // User-selected slower terminal radar simulation
     const AIRPORT_X = .58, AIRPORT_Y = .52;
     // Fictional scope scale: the thin approach ring is labelled 5 NM.
     const AIRPORT_5NM_SCREEN_RADIUS = .085;
@@ -75,6 +75,113 @@
     const nightYoke = document.getElementById('night-yoke-cursor');
     const nightYokeGraphic = document.getElementById('night-yoke-graphic');
     const nightYokeStatus = document.getElementById('night-yoke-status');
+    const radarMobileToggle = document.getElementById('radar-mobile-toggle');
+    const radarMobileClose = document.getElementById('radar-mobile-close');
+    const radarControlsPanel = document.getElementById('radar-controls-panel');
+    const radarMobileSelected = document.getElementById('radar-mobile-selected');
+    const tiltEnable = document.getElementById('night-tilt-enable');
+    const tiltCalibrate = document.getElementById('night-tilt-calibrate');
+    const motionStatus = document.getElementById('night-motion-status');
+    const touchStick = document.getElementById('night-touch-stick');
+    const touchKnob = document.getElementById('night-stick-knob');
+    const tilt = { enabled:false, base:null, calibrated:false, lastEvent:0, x:0, y:0 };
+    let touchStickPointer = null;
+    const isTouchUI = () => matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+    function setRadarDrawer(open) {
+      radarControlsPanel.classList.toggle('mobile-open',open);
+      radarMobileToggle.setAttribute('aria-expanded',String(open));
+    }
+    radarMobileToggle.addEventListener('click', () => setRadarDrawer(!radarControlsPanel.classList.contains('mobile-open')));
+    radarMobileClose.addEventListener('click', () => setRadarDrawer(false));
+    function setMotionStatus(message) { motionStatus.textContent = message; }
+    function useTouchFlight(x,y) {
+      approach.controlX = clamp(x,-1,1);
+      approach.controlY = clamp(y,-1,1);
+      approach.hasInput = true;
+      updateFlightControlVisuals();
+    }
+    function moveTouchStick(x,y) {
+      const r=touchStick.getBoundingClientRect();
+      const dx=clamp((x - (r.left+r.width/2))/(r.width*.38),-1,1);
+      const dy=clamp((y - (r.top+r.height/2))/(r.height*.38),-1,1);
+      touchKnob.style.transform = `translate(-50%,-50%) translate(${dx * r.width*.32}px,${dy * r.height*.32}px)`;
+      useTouchFlight(dx,dy);
+    }
+    touchStick.addEventListener('pointerdown', e => {
+      if(theme!=='night' || (e.pointerType==='mouse' && e.button!==0)) return;
+      if(tilt.enabled) return;
+      touchStickPointer=e.pointerId;
+      touchStick.setPointerCapture?.(e.pointerId);
+      moveTouchStick(e.clientX,e.clientY);
+      e.preventDefault();
+    });
+    touchStick.addEventListener('pointermove', e => {
+      if(touchStickPointer===e.pointerId) { moveTouchStick(e.clientX,e.clientY); e.preventDefault(); }
+    });
+    function finishStick(e) {
+      if(touchStickPointer!==e.pointerId) return;
+      touchStickPointer=null;
+      touchKnob.style.transform='translate(-50%,-50%)';
+      if(!tilt.enabled) useTouchFlight(0,0);
+      if(touchStick.hasPointerCapture?.(e.pointerId)) touchStick.releasePointerCapture(e.pointerId);
+    }
+    touchStick.addEventListener('pointerup',finishStick);
+    touchStick.addEventListener('pointercancel',finishStick);
+    function motionAngle() {
+      return (screen.orientation?.angle ?? window.orientation ?? 0) * Math.PI / 180;
+    }
+    // A new neutral is established when Night is selected or RECENTRE is pressed.
+    function recalibrateTilt() {
+      tilt.base = null;
+      tilt.calibrated = false;
+      tilt.x = 0; tilt.y = 0;
+      useTouchFlight(0,0);
+      if (tilt.enabled) setMotionStatus('Hold the device comfortably; taking this angle as level…');
+    }
+    function onOrientation(e) {
+      if(!tilt.enabled || theme!=='night' || e.beta==null || e.gamma==null) return;
+      const theta=motionAngle();
+      const roll = e.gamma * Math.cos(theta) + e.beta * Math.sin(theta);
+      const pitch = e.beta * Math.cos(theta) - e.gamma * Math.sin(theta);
+      if(!tilt.base) {
+        tilt.base={roll,pitch};
+        tilt.calibrated=true;
+        setMotionStatus('TILT ACTIVE · This is level · RECENTRE anytime');
+      }
+      const dx=clamp((roll-tilt.base.roll)/23,-1,1);
+      // Tilting the top forward commands a faster descent.
+      const dy=clamp((tilt.base.pitch-pitch)/24,-1,1);
+      tilt.x += (dx-tilt.x)*.25;
+      tilt.y += (dy-tilt.y)*.25;
+      tilt.lastEvent=performance.now();
+      useTouchFlight(tilt.x,tilt.y);
+    }
+    window.addEventListener('deviceorientation',onOrientation,{passive:true});
+    tiltEnable.addEventListener('click', async () => {
+      if(tilt.enabled) {
+        tilt.enabled=false;
+        tilt.base=null;
+        tiltEnable.textContent='ENABLE TILT';
+        tiltEnable.setAttribute('aria-pressed','false');
+        tiltCalibrate.disabled=true;
+        useTouchFlight(0,0);
+        setMotionStatus('Tilt off · drag the touch yoke');
+        return;
+      }
+      if (!window.DeviceOrientationEvent) {setMotionStatus('No motion sensor · use the touch yoke');return;}
+      try {
+        if(typeof DeviceOrientationEvent.requestPermission==='function') {
+          const permission=await DeviceOrientationEvent.requestPermission();
+          if(permission!=='granted') {setMotionStatus('Sensor permission denied · touch yoke available');return;}
+        }
+        tilt.enabled=true;
+        tiltEnable.textContent='TILT ON';
+        tiltEnable.setAttribute('aria-pressed','true');
+        tiltCalibrate.disabled=false;
+        recalibrateTilt();
+      } catch (_) {setMotionStatus('Tilt unavailable · use touch yoke');}
+    });
+    tiltCalibrate.addEventListener('click', recalibrateTilt);
     // This is an accelerated game simulation, NOT a real-world flight model.
     // 8.25 NM at 315 ft/NM begins almost exactly on the nominal glidepath at 2,600 ft.
     const APPROACH_START_DISTANCE = 8.25;
@@ -86,7 +193,7 @@
       distance: APPROACH_START_DISTANCE, altitude: 2600, descentRate: NOMINAL_DESCENT_RATE,
       runwayDrift: 0, bank: 0, whites: 2, phase: 'approach', phaseTime: 0,
       goodTime: 0, finalTime: 0, stableTail: 0, hasInput: false, localizer: 0,
-      glideslope: 0, runwayVisibility: .05
+      glideslope: 0, visualGlideslope: 0, runwayVisibility: .05
     };
 
     const flights = [
@@ -264,20 +371,60 @@
     }));
 
 
-    const cloudParticles = Array.from({ length: 34 }, (_, i) => ({
-      lane: ((i * 37.17) % 100) / 100,
-      depth: .08 + (((i * 19.31) % 100) / 100) * .92,
-      drift: (((i * 11.7) % 100) / 100 - .5) * .24,
-      size: .7 + (i % 5) * .18,
-      speed: .16 + (i % 7) * .028
+    // Four broad weather banks rather than tiny near-aircraft particles.
+    // They grow and move from the centre/horizon up through the upper sky.
+    // Broad, immersive cloud fields. Each bank is a quarter-screen or larger;
+    // none of the miniature particle/streak shapes used in earlier versions.
+    const cloudBanks = Array.from({length: 13}, (_, i) => ({
+      lane: Math.sin(i * 2.17) * .46,
+      depth: (i + .3) / 13,
+      speed: .038 + (i % 4) * .004,
+      size: 1.08 + (i % 4) * .13,
+      sprite: i % 3
     }));
-    function resetCloudParticle(p) {
-      p.lane = Math.random();
-      p.depth = .04 + Math.random() * .18;
-      p.drift = (Math.random() - .5) * .26;
-      p.size = .7 + Math.random() * .9;
-      p.speed = .14 + Math.random() * .10;
+    function resetCloudBank(p) {
+      p.lane = (Math.random() - .5) * 1.12;
+      p.depth = -.02; // emerge unseen, then gradually fade in
+      p.size = 1.05 + Math.random() * .43;
+      p.speed = .034 + Math.random() * .012;
+      p.sprite = Math.floor(Math.random() * 3);
     }
+    const smoothstep = (a,b,v) => {const x=clamp((v-a)/(b-a),0,1); return x*x*(3-2*x);};
+    // Bake each large, irregular, feathered cloud texture ONCE; per-frame work
+    // is just a few drawImage operations rather than dozens of new gradients.
+    function makeCloudSprite(seed) {
+      const image = document.createElement('canvas');
+      image.width = 700; image.height = 340;
+      const paint = image.getContext('2d');
+      if (!paint) return null;
+      let n = seed * 9301 + 49297;
+      const random = () => { n = (n * 1664525 + 1013904223) >>> 0; return n / 4294967296; };
+      // Irregular overlapping cloud masses; softly illuminated on upper edges.
+      const drawLobe = (x,y,rx,ry,shade,opacity) => {
+        paint.save();
+        paint.translate(x,y); paint.scale(rx,ry);
+        const g = paint.createRadialGradient(0,-.11,.01,0,0,1);
+        g.addColorStop(0,`rgba(${shade},${Math.min(shade+15,255)},${Math.min(shade+32,255)},${opacity})`);
+        g.addColorStop(.36,`rgba(${shade-22},${shade-7},${shade+12},${opacity*.83})`);
+        g.addColorStop(.76,`rgba(87,111,145,${opacity*.30})`);
+        g.addColorStop(1,'rgba(69,92,121,0)');
+        paint.fillStyle=g; paint.fillRect(-1,-1,2,2);
+        paint.restore();
+      };
+      // Broad diffuse body supplies the quarter-screen cloud-bank scale.
+      drawLobe(350,187,330,125,186,.60);
+      for(let i=0;i<21;i++) {
+        const x=140+random()*420;
+        const y=120+random()*98;
+        const rx=66+random()*92;
+        const ry=45+random()*65;
+        drawLobe(x,y,rx,ry,158+Math.floor(random()*56),.30+random()*.24);
+      }
+      return image;
+    }
+    const cloudSprites = [makeCloudSprite(11),makeCloudSprite(27),makeCloudSprite(43)];
+    const cloudLayer = document.createElement('canvas');
+    const cloudPaint = cloudLayer.getContext('2d');
     function resize() {
       const bounds = home.getBoundingClientRect();
       width = Math.round(bounds.width);
@@ -286,6 +433,8 @@
       if (!width || !height) return;
       canvas.width = Math.round(width * pixelRatio);
       canvas.height = Math.round(height * pixelRatio);
+      cloudLayer.width = width;
+      cloudLayer.height = Math.ceil(height * .75);
       ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
       render();
     }
@@ -326,9 +475,9 @@
     }
 
     function updateCloudVectors(dt) {
-      for (const p of cloudParticles) {
-        p.depth += dt * p.speed;
-        if (p.depth > 1.08) resetCloudParticle(p);
+      for (const bank of cloudBanks) {
+        bank.depth += dt * bank.speed * (.48 + 2.0 * Math.pow(Math.max(0, bank.depth), 2.1));
+        if (bank.depth > 1.14) resetCloudBank(bank);
       }
     }
     const observe = new IntersectionObserver(([entry]) => {
@@ -350,7 +499,8 @@
       drag = null; pointer.active = false;
       nightYoke.classList.remove('is-visible');
       if (next !== 'night') approachMessage.hidden = true;
-      if (next === 'night' && previousTheme !== 'night') resetApproach();
+      if (next === 'night' && previousTheme !== 'night') { resetApproach(); if(tilt.enabled) recalibrateTilt(); }
+      if (next !== 'radar') setRadarDrawer(false);
       if (storyInitialized) { showLeg(0); reconcileStoryTimer(); }
       // Theme changes are temporary. A reload always starts a fresh Sky session.
       reconcile();
@@ -454,7 +604,7 @@
       const r = home.getBoundingClientRect();
       return { x: e.clientX - r.left, y: e.clientY - r.top };
     }
-    function isUI(e) { return !!e.target.closest('.theme-console, .radar-console, .night-console, a, button'); }
+    function isUI(e) { return !!e.target.closest('.theme-console, .radar-console, .night-console, .night-touch-stick, .night-motion-tools, .approach-instrument, a, button'); }
     function getContactAt(x,y) {
       const hits = [];
       for (const t of flights) {
@@ -465,7 +615,7 @@
         const labelX = tx + (tx > width - 160 ? -122 : 12);
         const labelY = clamp(ty - 22, 18, height - 35);
         const onLabel = x >= labelX - 4 && x <= labelX + 130 && y >= labelY - 12 && y <= labelY + 27;
-        if (ds <= 30 || onLabel) hits.push({ t, d: onLabel ? Math.min(ds, 22) : ds });
+        if (ds <= (isTouchUI()?43:30) || onLabel) hits.push({ t, d: onLabel ? Math.min(ds, 22) : ds });
       }
       hits.sort((a,b) => a.d - b.d);
       return hits[0]?.t || null;
@@ -473,6 +623,7 @@
     function selectTrack(t) {
       selected = t && !t.crashed && !t.handoff ? t : null;
       selectedName.textContent = selected ? selected.callsign : '— — —';
+      radarMobileSelected.textContent = selected ? selected.callsign : 'SELECT TRACK';
       climbButton.disabled = descendButton.disabled = !selected;
       updateAltitudeReadout();
       updateVectorReadout();
@@ -536,7 +687,10 @@
       pointer.overUI = isUI(e);
       pointer.active = !pointer.overUI && e.pointerType !== 'touch';
       if (theme === 'night' && pointer.overUI) {
-        approach.controlX = 0; approach.controlY = 0;
+        // Do not neutralize a touch drag inside the on-screen yoke.
+        if (e.pointerType !== 'touch' && !tilt.enabled && touchStickPointer === null) {
+          approach.controlX = 0; approach.controlY = 0;
+        }
         nightYoke.classList.remove('is-visible');
       }
       if (theme === 'radar') {
@@ -547,7 +701,7 @@
         }
         if (reduced.matches) render();
       } else if (theme === 'night') {
-        if (!pointer.overUI) {
+        if (!pointer.overUI && e.pointerType !== 'touch' && !tilt.enabled) {
           // Mouse position acts as a joystick input, never an instantaneous teleport.
           // Up reduces rate of descent; down increases rate; left/right steer laterally.
           approach.controlX = clamp((pointer.x - .5) * 2, -1, 1);
@@ -563,7 +717,7 @@
       if (drag && e.pointerId === drag.id) return; // captured pointer can go beyond the home rectangle
       pointer.active = false;
       nightYoke.classList.remove('is-visible');
-      if (theme === 'night') { approach.controlX = 0; approach.controlY = 0; }
+      if (theme === 'night' && !tilt.enabled && touchStickPointer===null) { approach.controlX = 0; approach.controlY = 0; }
       if (reduced.matches) render();
     });
     home.addEventListener('pointerdown', e => {
@@ -848,9 +1002,9 @@
       approach.runwayDrift = 0; approach.bank = 0; approach.whites = 2;
       approach.phase = 'approach'; approach.phaseTime = 0;
       approach.goodTime = 0; approach.finalTime = 0; approach.stableTail = 0; approach.hasInput = false;
-      approach.localizer = 0; approach.glideslope = 0; approach.runwayVisibility = .05;
+      approach.localizer = 0; approach.glideslope = 0; approach.visualGlideslope = 0; approach.runwayVisibility = .05;
       approachMessage.hidden = true;
-      cloudParticles.forEach(resetCloudParticle);
+      cloudBanks.forEach((bank, i) => { bank.depth = [.22,.46,.72,.92,.07][i]; });
       updateApproachInstruments();
       updateNightPanel();
       updateFlightControlVisuals();
@@ -892,6 +1046,7 @@
       approach.localizer = clamp(approach.lateral / locFullScale, -1, 1);
       const desiredAltitude = approach.distance * GLIDEPATH_FEET_PER_NM;
       approach.glideslope = clamp((approach.altitude - desiredAltitude) / gsFullScale, -1, 1);
+      if (reduced.matches) approach.visualGlideslope = approach.glideslope;
       updatePapi();
       updateFlightControlVisuals();
     }
@@ -919,6 +1074,10 @@
       approach.runwayDrift += (runwayShift - approach.runwayDrift) * Math.min(1, dt * 2.8);
       approach.bank += (approach.controlX * .16 - approach.bank) * Math.min(1, dt * 2.8);
       updateApproachInstruments();
+      // Smooth only the visual runway perspective, not the ILS/PAPI/scoring data.
+      // High on glidepath = taller runway picture; low = flatter runway picture.
+      approach.visualGlideslope +=
+        (approach.glideslope - approach.visualGlideslope) * Math.min(1, dt * 3.4);
 
       if (approach.distance < 3.8) {
         approach.finalTime += dt;
@@ -1043,7 +1202,7 @@
       ctx.strokeRect(-11,-24,22,48);
       ctx.setLineDash([3,5]);ctx.beginPath();ctx.moveTo(0,-40);ctx.lineTo(0,40);ctx.stroke();
       ctx.setLineDash([]);ctx.fillStyle='rgba(110,245,137,.86)';ctx.font='bold 9px ui-monospace,monospace';
-      ctx.fillText('27',-7,-14);ctx.fillText('09',-6,20);ctx.restore();
+      ctx.fillText('35',-7,-14);ctx.fillText('17',-6,20);ctx.restore();
       ctx.font='10px ui-monospace,monospace';ctx.fillStyle='rgba(160,255,175,.72)';
       ctx.fillText('SIM / TWR',fieldX+22,fieldY-24);
       ctx.fillText('◈ AIRFIELD',fieldX+22,fieldY-11);
@@ -1132,6 +1291,26 @@
       }
       ctx.restore();
     }
+    function getRunwayGeometry() {
+      const progress = clamp(1 - approach.distance / APPROACH_START_DISTANCE, 0, 1);
+      const retreat = approach.phase === 'goaround' ? Math.min(1, approach.phaseTime / 3) : 0;
+      const runwayBottom = height * (1.06 + retreat * .12);
+      const referenceHorizon = height * (.76 - progress * .24 + retreat * .26);
+      const glideError = clamp(approach.visualGlideslope, -1, 1);
+      // Scale the projected *depth* so the runway's shape changes, rather
+      // than merely translating the whole drawing up and down the screen.
+      const referenceDepth = runwayBottom - referenceHorizon;
+      const pictureDepth = referenceDepth * (1 + glideError * .43);
+      const horizon = clamp(runwayBottom - pictureDepth, height * .18, height * .97);
+      const widthFactor = 1 - glideError * .09; // higher = visually more elongated
+      return {
+        horizon, runwayBottom,
+        center: width * (.5 + approach.runwayDrift * .9),
+        farHalf: Math.max(8, width * (.010 + progress * .01) * widthFactor),
+        nearHalf: Math.min(width * .29, width * (.14 + progress * .14) * widthFactor),
+        glideError
+      };
+    }
     function drawNight() {
       ctx.save();
       for(const s of stars){
@@ -1141,10 +1320,13 @@
       ctx.globalAlpha=1;
       const progress = 1 - approach.distance / APPROACH_START_DISTANCE;
       const retreat=approach.phase==='goaround'?Math.min(1,approach.phaseTime/3.0):0;
-      const horizon=height*(.76 - progress*.24 + retreat*.26);
-      const center=width*(.5+approach.runwayDrift*.9);
-      const farHalf=Math.max(8,width*.010 + progress*width*.01),nearHalf=Math.min(width*.26,width*(.14 + progress*.14));
-      const runwayBottom=height*(1.06 + retreat*.12);
+      // The path-relative runway picture changes with glidepath error:
+      // HIGH: a long/steep trapezoid (threshold farther up the screen).
+      // LOW: a short/flat trapezoid (threshold closer to the bottom).
+      // On slope, preserve the original reference picture at any given range.
+      // All geometry, lights and ground cues share these projected coordinates.
+      const runway = getRunwayGeometry();
+      const {horizon, center, farHalf, nearHalf, runwayBottom} = runway;
       const runwayAlpha = approach.runwayVisibility;
       ctx.globalAlpha = runwayAlpha;
       ctx.fillStyle='rgba(3,12,25,.76)';ctx.beginPath();ctx.moveTo(center-farHalf,horizon);ctx.lineTo(center+farHalf,horizon);ctx.lineTo(center+nearHalf,runwayBottom);ctx.lineTo(center-nearHalf,runwayBottom);ctx.closePath();ctx.fill();
@@ -1163,7 +1345,7 @@
       }
       for(let i=-4;i<=4;i++){
         ctx.fillStyle='#eefff3';ctx.shadowColor='#defefb';ctx.shadowBlur=11;
-        ctx.fillRect(center+i*Math.max(10,width*.012)-2,horizon+38,4,4);
+        ctx.fillRect(center+i*Math.max(10,width*.012)-2,horizon+Math.min(38,(runwayBottom-horizon)*.12),4,4);
       }
       ctx.shadowBlur=0;
       const papiX=center-Math.max(70,width*.085);
@@ -1182,33 +1364,71 @@
       drawCloudVectors(progress, horizon);
       // Plane stays tail-on near the centre; control input banks it and moves the runway.
       // Do not teleport the plane to the cursor position.
-      drawRearAircraft(width * .5, height * (width < 650 ? .67 : .75), approach.bank);
+      drawRearAircraft(width * .5, height * (width < 650 ? .61 : .55), approach.bank);
       ctx.restore();
     }
     function drawCloudVectors(progress, horizon){
-      let cover=clamp((approach.altitude-650)/1750,0,1);
-      if(approach.phase==='goaround') cover=clamp(.35 + approach.phaseTime/2.0,0,1);
+      let cover=clamp((approach.altitude-550)/1650,0,1);
+      if(approach.phase==='goaround') cover=clamp(.30+approach.phaseTime/2,0,1);
       if(approach.phase==='landed') cover=0;
-      if(cover<.01) return;
+      if(cover<.008) return;
       ctx.save();
-      ctx.lineCap='round';
-      for(const p of cloudParticles){
-        const depth = p.depth;
-        const spread = Math.pow(depth, 1.45);
-        const px = width * (.5 + (p.lane - .5) * (0.08 + spread * 1.15) + p.drift * spread + approach.localizer * .03 * spread);
-        const py = horizon - 18 + spread * (height * .92);
-        const len = 12 + spread * 38;
-        const thick = 1.4 + spread * 7 * p.size;
-        const alpha = cover * (.08 + spread * .30) * (1 - retreatClamp());
-        ctx.strokeStyle = `rgba(216,231,250,${alpha})`;
-        ctx.lineWidth = thick;
-        ctx.shadowColor = 'rgba(214,227,246,.16)';
-        ctx.shadowBlur = 7;
-        ctx.beginPath();
-        ctx.moveTo(px, py - len * .52);
-        ctx.lineTo(px, py + len * .48);
-        ctx.stroke();
+      const retreat=retreatClamp();
+      // Flying high: cloud layer reaches much LOWER in the view. Descending
+      // beneath the base: cloud ceiling rises toward the top of the screen.
+      // The lower-horizon fog remains separate and intentionally subtle.
+      const cloudBase=height * (.68 - progress*.29);
+      const upperLimit=Math.max(40,Math.min(horizon - 8,cloudBase));
+      const layer = cloudPaint || ctx;
+      layer.clearRect(0,0,width,cloudLayer.height);
+      layer.save();
+      layer.beginPath();layer.rect(0,0,width,upperLimit);layer.clip();
+      const skyFog=layer.createLinearGradient(0,0,0,upperLimit);
+      skyFog.addColorStop(0,'rgba(16,31,54,0)');
+      skyFog.addColorStop(.58,`rgba(63,85,113,${cover*.045})`);
+      skyFog.addColorStop(1,`rgba(42,60,84,${cover*.15})`);
+      layer.fillStyle=skyFog;layer.fillRect(0,0,width,upperLimit);
+
+      for(const bank of cloudBanks){
+        const depth=clamp(bank.depth,0,1.14);
+        const scale=depth**1.36;
+        const bankW=width*(.35+.62*scale)*bank.size;
+        const bankH=height*(.23+.35*scale)*bank.size;
+        const x=width*(.5+bank.lane*(.19+1.02*scale)-approach.localizer*.014);
+        const y=upperLimit*(.96-1.12*scale);
+        // Fully invisible at spawn: alpha ramps from ZERO gradually. The
+        // sprite's feathering, not a hard reset, defines cloud-bank edges.
+        const enter=smoothstep(.015,.25,depth);
+        const leave=1-smoothstep(1.00,1.14,depth);
+        layer.globalAlpha=cover*(.43+.45*scale)*enter*leave*(1-retreat*.55);
+        const sprite=cloudSprites[bank.sprite];
+        if(sprite && layer.globalAlpha>.001) layer.drawImage(sprite,x-bankW/2,y-bankH/2,bankW,bankH);
       }
+      layer.restore();
+      if(cloudPaint){
+        layer.save();layer.globalCompositeOperation='destination-in';
+        const fade=layer.createLinearGradient(0,upperLimit*.78,0,upperLimit);
+        fade.addColorStop(0,'rgba(0,0,0,1)');
+        fade.addColorStop(1,'rgba(0,0,0,0)');
+        layer.fillStyle=fade;layer.fillRect(0,0,width,upperLimit);
+        layer.restore();
+        ctx.drawImage(cloudLayer,0,0);
+      }
+
+      // Below the runway horizon, retain the gentle near-static haze only.
+      ctx.save();
+      ctx.beginPath();ctx.rect(0,Math.max(0,horizon),width,Math.max(0,height-horizon));ctx.clip();
+      for(let i=0;i<8;i++){
+        const bandY=horizon+(i/8)*(height-horizon);
+        const bandH=28+i*12;
+        const alpha=cover*(.018+i*.003)*(1-retreat);
+        const fog=ctx.createLinearGradient(0,bandY-bandH,0,bandY+bandH);
+        fog.addColorStop(0,'rgba(185,198,214,0)');
+        fog.addColorStop(.5,`rgba(190,205,220,${alpha})`);
+        fog.addColorStop(1,'rgba(185,198,214,0)');
+        ctx.fillStyle=fog;ctx.fillRect(0,bandY-bandH,width,bandH*2);
+      }
+      ctx.restore();
       ctx.restore();
     }
     function retreatClamp(){ return approach.phase==='goaround' ? clamp(approach.phaseTime/2.2,0,1) : 0; }
