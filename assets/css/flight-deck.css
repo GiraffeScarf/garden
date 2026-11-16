@@ -1,0 +1,202 @@
+/* Al Page / Flight Deck. All copy and original portfolio remain untouched.
+   All additions use compositor-friendly transforms and are optional. */
+:root {
+  --flight-accent: #86c9ff;
+  --flight-rgb: 134, 201, 255;
+  --flight-secondary: #2867b2;
+  --flight-ink: #163556;
+  --flight-page: #f5f8fc;
+  --flight-drift-x: 0px;
+  --flight-drift-y: 0px;
+  --flight-pitch: 0px;
+  --flight-bank: 0deg;
+  --flight-tilt-x: 0deg;
+  --flight-tilt-y: 0deg;
+}
+:root[data-flight-theme="sunset"] {
+  --flight-accent: #ffc277;
+  --flight-rgb: 255, 170, 93;
+  --flight-secondary: #b8772f;
+  --flight-ink: #59351e;
+  --flight-page: #fff9f1;
+}
+:root[data-flight-theme="radar"] {
+  --flight-accent: #a0ffa9;
+  --flight-rgb: 123, 231, 150;
+  --flight-secondary: #18815b;
+  --flight-ink: #1c4a32;
+  --flight-page: #f4faf5;
+}
+:root[data-flight-theme="night"] {
+  --flight-accent: #d4b2ff;
+  --flight-rgb: 194, 153, 255;
+  --flight-secondary: #7253a1;
+  --flight-ink: #342451;
+  --flight-page: #f8f6fc;
+}
+/* Keep the original randomized home photo crisp, but move it to its own
+   transform layer to enable parallax without moving the foreground content. */
+#home { isolation: isolate; background-image: none !important; overflow: hidden; }
+#home::before {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  background-image: var(--home-image, url('../images/home1.jpg'));
+  background-color: #203349;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  transform: translate3d(var(--flight-drift-x), var(--flight-drift-y), 0) scale(1.035);
+  will-change: transform;
+  z-index: 0;
+}
+#home::after {
+  z-index: 1;
+  opacity: 1;
+  background: linear-gradient(100deg, rgba(5, 14, 29, .78) 3%, rgba(4, 14, 31, .50) 51%, rgba(var(--flight-rgb), .17) 100%);
+  filter: none;
+  transition: background .35s ease;
+  pointer-events: none;
+}
+#home > canvas.background { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+#home .intro {
+  z-index: 8;
+  background-image: none; /* The optional pattern1.png file was removed from this upload. */
+  max-width: 900px;
+  padding: 45px 48px;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, .20);
+}
+#home .intro .hello { font-size: clamp(15px, 2.1vw, 20px); }
+#home .intro h1 {
+  font-size: clamp(25px, 3.6vw, 43px);
+  letter-spacing: .005em;
+  line-height: 1.3;
+  font-weight: 300;
+  min-height: 115px;
+  margin: 10px 0;
+}
+#home .intro h1 .txt-rotate { color: var(--flight-accent); font-weight: 600; }
+#home .intro .who-creates { font-size: clamp(11px, 1.45vw, 16px); line-height: 1.6; opacity: .84; }
+#home .txt-rotate > .wrap { border-right: .055em solid var(--flight-accent); }
+#home .mouse-icon { bottom: 38px; opacity: .65; }
+#home .mouse-icon:hover { bottom: 38px; }
+#home .mouse-icon .wheel { background: var(--flight-accent); }
+/* Lightweight heads-up-display elements; always decorative, never controls. */
+.flight-hud { position: absolute; inset: 0; z-index: 3; color: var(--flight-accent); pointer-events: none; font: 500 11px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .12em; }
+.hud-corner { position: absolute; display: grid; gap: 4px; min-width: 150px; opacity: .76; }
+.hud-corner small { color: rgba(255,255,255,.65); font-size: 10px; letter-spacing: .11em; }
+.hud-top-left { top: 33px; left: 36px; }
+.hud-top-right { top: 33px; right: 36px; text-align: right; }
+.hud-corner b { font-weight: 700; color: white; }
+.hud-attitude { width: min(58vw, 600px); height: min(58vw, 600px); max-height: 70vh; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: .34; }
+.hud-attitude::before, .hud-attitude::after { content: ""; position: absolute; inset: 8%; border: 1px solid rgba(var(--flight-rgb),.4); border-radius: 50%; }
+.hud-attitude::after { inset: 26%; border-style: dashed; opacity: .6; }
+.hud-horizon { position: absolute; width: 58%; top: calc(50% + var(--flight-pitch)); left: 21%; height: 1px; background: currentColor; box-shadow: 0 0 15px rgba(var(--flight-rgb),.3); transform: rotate(var(--flight-bank)); transition: transform .12s linear, top .12s linear; }
+.hud-horizon::before, .hud-horizon::after { content: ""; position: absolute; height: 7px; width: 1px; background: currentColor; top: -3px; }
+.hud-horizon::before { left: 30%; } .hud-horizon::after { right: 30%; }
+.hud-aircraft { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); display: flex; align-items: center; gap: 18px; }
+.hud-aircraft span { width: 42px; height: 2px; background: currentColor; }
+.hud-aircraft i { font-size: 21px; transform: rotate(-90deg); }
+.hud-cross { position: absolute; inset: 0; background: linear-gradient(to right, transparent calc(50% - .5px), rgba(var(--flight-rgb),.26) 50%, transparent calc(50% + .5px)), linear-gradient(to bottom, transparent calc(50% - .5px), rgba(var(--flight-rgb),.26) 50%, transparent calc(50% + .5px)); clip-path: circle(39%); }
+.hud-left-scale, .hud-right-scale { position: absolute; top: 46%; display: grid; gap: 10px; font-size: 9px; letter-spacing: .08em; opacity: .64; }
+.hud-left-scale { left: 35px; border-left: 1px solid currentColor; padding-left: 13px; }
+.hud-right-scale { right: 35px; text-align: right; border-right: 1px solid currentColor; padding-right: 13px; }
+.flight-pointer { position: absolute; z-index: 5; left: 50%; top: 50%; transform: translate3d(-50%, -50%, 0) rotate(-43deg); color: var(--flight-accent); pointer-events: none; opacity: 0; transition: opacity .2s ease; filter: drop-shadow(0 0 10px rgba(var(--flight-rgb),.8)); }
+.flight-pointer i { font-size: 18px; }
+#home.is-piloting .flight-pointer { opacity: .85; }
+/* The story is a real usable flight recorder, rather than an endless typing loop. */
+.flight-recorder { width: min(100%, 540px); margin-top: 22px; padding: 16px 19px 14px; border: 1px solid rgba(var(--flight-rgb),.38); border-radius: 9px; background: rgba(3,12,25,.45); box-shadow: 0 16px 55px rgba(0,0,0,.14); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); text-shadow: none; }
+.recorder-meta { display: flex; justify-content: space-between; gap: 14px; align-items: center; color: var(--flight-accent); font: 700 10px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .1em; }
+.recorder-muted { opacity: .6; }
+.recorder-led { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: currentColor; box-shadow: 0 0 12px currentColor; margin: 0 8px 1px 0; }
+.recorder-progress { height: 3px; margin: 13px 0; border-radius: 5px; background: rgba(255,255,255,.17); overflow: hidden; }
+.recorder-progress > span { display: block; width: 2.7%; height: 100%; background: var(--flight-accent); transition: width .25s ease; box-shadow: 0 0 10px rgba(var(--flight-rgb),.6); }
+.recorder-controls { display: flex; align-items: center; gap: 8px; }
+.recorder-button { border: 1px solid rgba(var(--flight-rgb),.42); border-radius: 6px; color: #fff; font: 600 10px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .07em; background: rgba(255,255,255,.07); padding: 10px 13px; cursor: pointer; transition: background .2s ease, border-color .2s ease; }
+.recorder-button:hover, .recorder-button:focus-visible { background: rgba(var(--flight-rgb),.20); border-color: var(--flight-accent); }
+.recorder-button:focus-visible, .theme-key:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.recorder-button:disabled { opacity: .35; cursor: default; }
+.recorder-primary { flex: 1; text-align: center; color: var(--flight-accent); }
+.recorder-primary i { margin-left: 9px; }
+.recorder-auto { display: flex; align-items: center; gap: 7px; }
+.recorder-auto[aria-pressed="false"] { opacity: .58; }
+.recorder-hint { font: 400 10px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; color: rgba(255,255,255,.59); margin: 10px 0 0; }
+/* Easily discoverable clickable keyboard themes. */
+.theme-console { position: absolute; z-index: 12; bottom: 24px; left: 32px; padding: 10px 12px; border: 1px solid rgba(var(--flight-rgb),.4); border-radius: 8px; background: rgba(4,11,25,.54); backdrop-filter: blur(9px); -webkit-backdrop-filter: blur(9px); color: #fff; }
+.theme-caption { display: flex; justify-content: space-between; align-items: center; gap: 15px; font: 600 9px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .08em; opacity: .74; margin-bottom: 8px; }
+.theme-caption i { color: var(--flight-accent); }
+.theme-caption > span { color: var(--flight-accent); }
+.theme-options { display: flex; gap: 5px; }
+.theme-key { display: flex; gap: 5px; align-items: center; padding: 5px 7px; border: 1px solid rgba(255,255,255,.23); border-radius: 4px; background: rgba(255,255,255,.04); color: #fff; font: 500 10px/1.3 ui-monospace, SFMono-Regular, Consolas, monospace; cursor: pointer; transition: background .15s, border-color .15s; }
+.theme-key kbd { background: rgba(255,255,255,.13); border: 0; border-radius: 2px; padding: 1px 4px; color: inherit; box-shadow: none; font: inherit; }
+.theme-key:hover, .theme-key[aria-pressed="true"] { border-color: var(--flight-accent); background: rgba(var(--flight-rgb), .18); }
+.theme-key[aria-pressed="true"] kbd { background: var(--flight-accent); color: #142338; }
+/* Theme changes echo through the rest of the original site. */
+a { color: var(--flight-secondary); }
+a:hover { color: var(--flight-secondary); }
+#services { background: var(--flight-page); transition: background .25s ease; }
+.module-line, .progress-bar { background: var(--flight-secondary); }
+.navbar-custom .navbar-nav > li.active > a, .navbar-custom .navbar-nav > li > a:hover, .navbar-custom .navbar-brand:hover { color: var(--flight-secondary) !important; }
+#filter .active, #filter li:hover { color: var(--flight-secondary); }
+.iconbox-icon i, .iconboxleft-icon i { color: var(--flight-secondary); }
+.scroll-up a { background: var(--flight-secondary); }
+/* Pointer-responsive hover tilt applies to card bodies, never the masonry
+   item itself (which is controlled by the masonry positioning system). */
+@media (hover: hover) and (pointer: fine) {
+  .animate-on-scroll .iconbox.wow.is-visible:hover,
+  .animate-on-scroll .iconboxleft.wow.is-visible:hover,
+  .iconbox:hover, .iconboxleft:hover {
+    transform: perspective(950px) rotateX(var(--card-tilt-x, 0deg)) rotateY(var(--card-tilt-y, 0deg)) translateY(-4px);
+    box-shadow: 0 18px 35px rgba(var(--flight-rgb), .12);
+  }
+  .iconbox, .iconboxleft { transition: transform .22s ease-out, box-shadow .22s ease-out; }
+}
+@media (max-width: 980px) {
+  .hud-left-scale, .hud-right-scale { display: none; }
+  .hud-attitude { opacity: .21; }
+}
+@media (max-width: 767px) {
+  #home .intro { padding: 26px 22px; top: 46%; }
+  #home .intro .hello { margin: 8px 0; }
+  #home .intro h1 { font-size: clamp(24px, 5.4vw, 36px); min-height: 105px; margin: 12px 0; }
+  #home .intro .who-creates { margin: 10px 0; }
+  .flight-recorder { margin-top: 13px; padding: 12px; }
+  .recorder-muted, .recorder-hint { display: none; }
+  .hud-top-left { left: 17px; top: 18px; }
+  .hud-top-right { right: 17px; top: 18px; }
+  .hud-corner { min-width: 0; font-size: 9px; }
+  .hud-corner small { font-size: 8px; }
+  .theme-console { left: 50%; transform: translateX(-50%); bottom: 14px; padding: 8px 10px; width: max-content; max-width: calc(100% - 20px); }
+  .theme-key { padding: 5px; }
+  .flight-pointer { display: none; }
+}
+@media (max-width: 390px) {
+  #home .intro { padding: 24px 15px; }
+  #home .intro h1 { min-height: 90px; font-size: 24px; }
+  .recorder-button { font-size: 9px; padding: 9px; }
+  .theme-key { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #home::before { transform: none; will-change: auto; }
+  .flight-pointer, #home > canvas.background { display: none; }
+  .hud-horizon, .recorder-progress > span, .recorder-button, .theme-key { transition: none; }
+  .iconbox:hover, .iconboxleft:hover { transform: none !important; }
+}
+/* A hint of narrative progression in the instruments (the text never changes). */
+#home[data-story-phase="signal"] .hud-attitude { opacity: .43; }
+#home[data-story-phase="watch"] .recorder-led { animation: recorder-alert 1.6s ease-in-out infinite; }
+#home[data-story-phase="watch"] .flight-recorder { border-color: rgba(var(--flight-rgb), .63); }
+#home[data-story-phase="trail"] .hud-attitude { opacity: .52; }
+@keyframes recorder-alert { 50% { opacity: .25; box-shadow: 0 0 2px currentColor; } }
+@media (max-height: 660px) and (max-width: 767px) {
+  #home .intro { top: 46%; padding-top: 18px; padding-bottom: 15px; }
+  #home .intro .hello { font-size: 13px; }
+  #home .intro h1 { min-height: 85px; margin: 8px 0; font-size: 23px; }
+  #home .intro .who-creates { font-size: 10px; }
+  .flight-recorder { margin-top: 8px; padding: 9px; }
+  .recorder-progress { margin: 9px 0; }
+  .theme-console { bottom: 5px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #home[data-story-phase="watch"] .recorder-led { animation: none; }
+}

@@ -8,7 +8,6 @@
 	<meta name="description" content="
          ">
 	<meta name="keywords" content="">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
 	<link rel="icon" type="image/png" href="assets/images/favicon.ico">
 	<title>Al Page</title>
 	<!-- CSS -->
@@ -16,61 +15,104 @@
 	<link href="assets/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
 	<!-- Font Awesome CSS -->
 	<link href="assets/css/all.css" rel="stylesheet" media="screen">
-	<!--[if lte IE 7]>
-      <script src="assets/js/icons-lte-ie7.js"></script>
-      <![endif]-->
-	<!-- Magnific-popup lightbox -->
-	<link href="assets/css/magnific-popup.css" rel="stylesheet">
-	<!-- Owl Carousel -->
-	<link href="assets/css/owl.theme.css" rel="stylesheet">
-	<link href="assets/css/owl.carousel.css" rel="stylesheet">
-	<!-- Animate css -->
-	<link href="assets/css/animate.css" rel="stylesheet">
+	<!-- Load Poppins directly instead of delaying it behind a CSS @import. -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet">
 	<!-- Custom styles CSS -->
-	<link href="assets/css/style.css" rel="stylesheet" media="screen"> </head>
+	<link href="assets/css/style.css" rel="stylesheet" media="screen">
+	<link href="assets/css/aviation.css" rel="stylesheet" media="screen">
+	<!-- Choose the existing random hero photo before the home section paints. -->
+	<script>
+		(function () {
+			var images = ['home2.jpg', 'home1.jpg', 'home3.jpg', 'home4.jpg', 'home5.jpg', 'home6.jpg'];
+			// Resolve against the page itself. CSS custom-property url() values
+			// are otherwise resolved against assets/css/style.css, not index.html.
+			var path = new URL('assets/images/' + images[Math.floor(Math.random() * images.length)], document.baseURI).href;
+			document.documentElement.style.setProperty('--home-image', 'url("' + path + '")');
+			var preload = document.createElement('link');
+			preload.rel = 'preload';
+			preload.as = 'image';
+			preload.href = path;
+			preload.setAttribute('fetchpriority', 'high');
+			document.head.appendChild(preload);
+		}());
+	</script>
+</head>
 
 <body>
-	<!-- Preloader -->
-	<div id="loading">
-		<div id="loading-center">
-			<div id="loading-center-absolute">
-				<div class="box">
-					<div class="blobs">
-						<div class="blob"></div>
-						<div class="blob"></div>
-					</div>
-					<svg xmlns="http://www.w3.org/2000/svg" version="1.1">
-						<defs>
-							<filter id="goo">
-								<feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur" />
-								<feColorMatrix in="blur" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 18 -7" result="goo" />
-								<feBlend in="SourceGraphic" in2="goo" /> </filter>
-						</defs>
-					</svg>
-				</div>
-			</div>
-		</div>
-	</div>
 	<!-- Home start -->
 	<section id="home" class="module-image js-height-full">
+		<canvas id="aviation-canvas" aria-hidden="true"></canvas>
+		<div id="night-yoke-cursor" class="night-yoke-cursor" aria-hidden="true">
+          <svg id="night-yoke-graphic" viewBox="0 0 100 110" width="84" height="92" focusable="false" aria-hidden="true">
+            <defs>
+              <linearGradient id="night-yoke-metal" x1="0%" y1="0%" x2="80%" y2="100%"><stop stop-color="#e5f5ff"/><stop offset="0.38" stop-color="#7794b1"/><stop offset="0.75" stop-color="#2f455b"/><stop offset="1" stop-color="#d9e8f7"/></linearGradient>
+              <linearGradient id="night-yoke-grip" x1="0%" y1="0%" x2="100%" y2="60%"><stop stop-color="#1d3549"/><stop offset="0.5" stop-color="#07131e"/><stop offset="1" stop-color="#415a71"/></linearGradient>
+            </defs>
+            <path d="M50 52 L50 94" stroke="#5c768c" stroke-width="12" stroke-linecap="round"/>
+            <path d="M50 50 L50 92" stroke="url(#night-yoke-metal)" stroke-width="7" stroke-linecap="round"/>
+            <path d="M50 48 L31 52 L19 39 L19 20 M50 48 L69 52 L81 39 L81 20" fill="none" stroke="url(#night-yoke-metal)" stroke-width="12" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M19 20 L19 39 M81 20 L81 39" fill="none" stroke="url(#night-yoke-grip)" stroke-width="15" stroke-linecap="round"/>
+            <path d="M50 48 L31 52 L19 39 M50 48 L69 52 L81 39" fill="none" stroke="#9eb7cc" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+            <circle cx="50" cy="48" r="14" fill="url(#night-yoke-metal)" stroke="#d9eeff" stroke-width="1.5"/>
+            <circle cx="50" cy="48" r="8" fill="#192d42" stroke="#8aadc6" stroke-width="1"/>
+            <path d="M50 42 V54 M44 48 H56" stroke="#8beaff" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="50" cy="94" r="4" fill="#a7cfe9"/>
+          </svg>
+          <span id="night-yoke-status">LEVEL · CENTRE</span>
+        </div>
+		<div class="flight-scanlines" aria-hidden="true"></div>
 		<div class="intro">
 			<div class="hello">Hi, my name is <strong class="RUPE">Al</strong> and</div>
-			<h1>there is
-			  <span id="story" class="txt-rotate" data-period="2400"></span>
-			</h1>
-
-
-
-
-            </h1>
+			<h1 id="story-title">I make things. Most of them on purpose.</h1>
+			<p class="story-description" id="story-description">Welcome aboard. Yes, the website has a seatbelt sign. No, I don't know who approved that.</p>
 			<div class="who-creates">Stationary Graphics | Watersites | Potatography | Tomatography</div>
-		</div>
-		<canvas class="background"></canvas>
-		<a href="#services">
-			<div class="mouse-icon">
-				<div class="wheel"></div>
+			<div class="flight-recorder" role="group" aria-label="Interactive flight story">
+				<div class="recorder-meta"><span><span class="recorder-led"></span> THE FLIGHT LOG <span class="recorder-muted">/ AUTO-BRIEFING</span></span><span id="story-counter">01 / 08</span></div>
+				<div class="recorder-stage" id="story-stage">01 / BOARDING</div>
+				<div class="recorder-progress" role="progressbar" aria-label="Flight log progress" aria-valuemin="1" aria-valuemax="8" aria-valuenow="1"><span id="story-progress"></span></div>
+				<div class="recorder-controls">
+					<button id="story-prev" class="recorder-button" type="button" aria-label="Previous flight log entry" title="Previous log entry (left arrow)"><i class="fas fa-chevron-left" aria-hidden="true"></i></button>
+					<button id="story-next" class="recorder-button recorder-primary" type="button" title="Next flight log entry (right arrow)">NEXT LEG <i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+					<button id="story-autoplay" class="recorder-button" type="button" aria-pressed="true" title="Pause the automatic story">❚❚ PAUSE</button>
+					<a href="#portfolio" class="recorder-button recorder-work">VIEW WORKS <i class="fas fa-arrow-down" aria-hidden="true"></i></a>
+				</div>
+				<div class="recorder-hint">THREE STORIES · AUTO-ADVANCES · ← → SKIP · A / S / D THEMES</div>
 			</div>
-		</a>
+		</div>
+		<div class="top-status" aria-hidden="true"><span>AL / INTERACTIVE FLIGHT DECK</span><span id="environment-label">DAY VFR · CLEAR SKIES</span></div>
+		<div class="radar-console" aria-label="Radar vectoring simulator controls">
+			<div class="radar-panel-title"><span class="radar-led"></span> ATC / VECTOR DESK <small>SIMULATED TRAFFIC</small></div>
+			<div class="radar-values"><div><span>SELECTED TRACK</span><strong id="tracked-callsign">— — —</strong></div><div><span>INCIDENTS / ALERTS</span><strong><span id="radar-incidents">0</span><small> / </small><span id="radar-alert-count">00</span></strong></div></div>
+            <div class="radar-altitude"><span id="radar-altitude-label">SELECT A TRACK TO CHANGE ALTITUDE</span><div class="radar-alt-controls"><button id="radar-descend" type="button" disabled>▼ -1,000 FT</button><button id="radar-climb" type="button" disabled>▲ +1,000 FT</button></div></div>
+			<div class="vector-readout" id="vector-readout">Select an aircraft, then drag a heading and speed vector.</div>
+			<div id="traffic-status" class="traffic-status" role="status" aria-live="polite">● SEPARATION NORMAL</div>
+			<div id="traffic-detail" class="traffic-detail">Aircraft-to-aircraft proximity and altitude are monitored.</div>
+			<div id="radar-comms" class="radar-comms" aria-live="off">ATC: Welcome to the radar desk. Please avoid making paperwork.</div>
+            <div class="radar-controls"><button id="radar-pause" type="button" aria-pressed="false">PAUSE</button><button id="radar-clear" type="button">DESELECT</button></div>
+            <div class="radar-controls"><button id="radar-add" type="button">+ TRAFFIC</button><button id="radar-reset" type="button">RESET SCOPE</button></div>
+			<div class="radar-footnote">DRAG TO VECTOR (FIRST 1CM = MIN SPD) · FL030 + 5 NM → TOWER · EDGE → NEXT SECTOR · 2 INCIDENTS = GAME OVER</div>
+		</div>
+		<div class="night-console" aria-live="off"><span>✦ RWY 27 · NIGHT APPROACH</span><span id="night-altitude">2,600 FT · IMC</span><span id="night-approach-state">DESCENDING THROUGH CLOUD</span><span class="night-papi-lights" id="night-papi-lights" aria-hidden="true"></span><span id="night-papi">PAPI  2 WHITE / 2 RED · ON GLIDEPATH</span><span id="night-localizer">LOCALIZER · CENTRED</span><span id="night-glideslope">GLIDESLOPE · ON PROFILE</span><span class="night-control-help">MOUSE ↑ SLOWER DESCENT · ↓ FASTER · ← → STEER</span><button type="button" id="night-restart">↻ RESTART APPROACH</button></div>
+		<div class="approach-instrument" id="approach-instrument" aria-hidden="true"><div class="approach-instrument-title">ILS 27 · LOCALIZER / GLIDESLOPE</div>
+            <div class="approach-controls-display" aria-label="Live aircraft control indications">
+              <div class="flight-control-row"><span id="night-steer-output">WINGS LEVEL</span><div class="flight-control-bar"><span class="flight-control-marker" id="night-steer-marker"></span></div><div class="flight-control-axis"><span>◀ LEFT</span><span>RIGHT ▶</span></div></div>
+              <div class="flight-control-row"><span id="night-sink-output">NOMINAL DESCENT · 100%</span><div class="flight-control-bar flight-control-sink"><span class="flight-control-marker" id="night-sink-marker"></span></div><div class="flight-control-axis"><span>↑ SLOWER</span><span>FASTER ↓</span></div></div>
+            </div><div class="approach-instrument-face"><div class="instrument-ref instrument-ref-v"></div><div class="instrument-ref instrument-ref-h"></div><div class="instrument-needle instrument-needle-v" id="night-loc-needle"></div><div class="instrument-needle instrument-needle-h" id="night-gs-needle"></div><div class="instrument-aircraft">✈</div></div><div class="approach-instrument-readout"><span id="night-instrument-loc">LOC · CENTRED</span><span id="night-instrument-gs">GS · ON PROFILE</span></div></div>
+		<div class="game-popup" id="game-popup" role="dialog" aria-modal="true" aria-labelledby="game-popup-title" hidden>
+            <div class="game-popup-content"><span id="game-popup-kicker">NOTICE OF RE-EVALUATION</span><h2 id="game-popup-title">YOUR ATC LICENCE HAS BEEN REVOKED</h2><p id="game-popup-message">Two incidents. The paperwork now has its own paperwork.</p><p id="game-popup-authority">Aviation Authority · Regional office</p><p class="game-popup-privacy">Country is looked up from your IP only when this notice appears. The lookup may contact country.is; no IP or location is stored by this site. This is a fictional game.</p><div class="game-popup-actions"><button id="game-restart" type="button">REQUEST A SECOND CHANCE</button><button id="game-dismiss" type="button">ACCEPT THE SHAME</button></div></div>
+        </div>
+        <div id="approach-message" class="approach-message" role="status" aria-live="polite" hidden><strong id="approach-message-title"></strong><span id="approach-message-text"></span><button id="approach-retry" type="button">TRY ANOTHER APPROACH</button></div>
+        <div class="theme-console" role="group" aria-label="Aviation environments">
+			<div class="theme-caption"><i class="fas fa-sliders-h" aria-hidden="true"></i> SELECT ENVIRONMENT <span>A S D</span></div>
+			<div class="theme-options">
+				<button class="theme-key" type="button" data-theme="sky" aria-pressed="true" title="A: Daytime sky"><kbd>A</kbd><span>Sky</span></button>
+				<button class="theme-key" type="button" data-theme="radar" aria-pressed="false" title="S: Classic ATC radar"><kbd>S</kbd><span>Radar</span></button>
+				<button class="theme-key" type="button" data-theme="night" aria-pressed="false" title="D: Night airport approach"><kbd>D</kbd><span>Night</span></button>
+			</div>
+		</div>
+		<a href="#services" aria-label="Scroll to skills"><div class="mouse-icon"><div class="wheel"></div></div></a>
 	</section>
 	<!-- Home end -->
 	<!-- Navigation start -->
@@ -78,9 +120,9 @@
 		<nav class="navbar navbar-custom">
 			<div class="container">
 				<div class="navbar-header">
-					<button id="my-toggle" type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#custom-collapse"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> <a class="navbar-brand" href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">LinkedIn</a> </div>
+					<button id="my-toggle" type="button" class="navbar-toggle collapsed" aria-controls="custom-collapse" aria-expanded="false" data-toggle="collapse" data-target="#custom-collapse"> <span class="sr-only">Toggle navigation</span> <span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span> </button> <a class="navbar-brand" href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer">LinkedIn</a> </div>
 				<div class="collapse navbar-collapse" id="custom-collapse">
-					<ul class="nav navbar-nav navbar-right" onclick='if (document.body.clientWidth < 768) {document.getElementById("my-toggle").click();}'>
+					<ul class="nav navbar-nav navbar-right">
 						<!-- Clicks the nav bar closed when in mobile view -->
 						
 						<li><a href="#home">home</a></li>
@@ -144,11 +186,6 @@
 	<!-- Services end -->
 	<!-- Portfolio start -->
 	<section id="portfolio" class="module">
-		<div id="preload" display="none"> <!-- pre-loads the larger gifs -->
-		 <img src ="assets/images/portfolio/motion-2-active.gif" loading="lazy" width="1" height="1" alt="Image 02" />
-		 <img src ="assets/images/portfolio/motion-3-active.gif" loading="lazy" width="1" height="1" alt="Image 03" />
-		 <img src ="assets/images/portfolio/motion-4-active.gif" loading="lazy" width="1" height="1" alt="Image 05" />
-		</div>
 		<div class="container">
 			<div class="row">
 				<div class="module-header">
@@ -165,10 +202,10 @@
 			<div class="row">
 				<div class="col-sm-12">
 					<ul id="filter">
-						<li class="active" data-group="all">All</li>
-						<li data-group="logo">Logo</li>
-						<li data-group="poster">Poster</li>
-						<li data-group="motion">Motion</li>
+						<li class="active" data-group="all" role="button" tabindex="0" aria-pressed="true">All</li>
+						<li data-group="logo" role="button" tabindex="0" aria-pressed="false">Logo</li>
+						<li data-group="poster" role="button" tabindex="0" aria-pressed="false">Poster</li>
+						<li data-group="motion" role="button" tabindex="0" aria-pressed="false">Motion</li>
 					</ul>
 				</div>
 			</div>
@@ -178,7 +215,7 @@
 		<!-- .contaier -->
 		<ul class="list-items-container">
 			<li class="list-item" data-groups="all poster">
-				<figure> <img src="assets/images/portfolio/poster-3p.jpg" loading="lazy" alt="p3">
+				<figure> <img src="assets/images/portfolio/poster-3p.jpg" loading="lazy" decoding="async" alt="p3">
 					<figcaption>
 						<a href="assets/images/portfolio/poster-3.jpg" loading="lazy" class="simple-ajax-popup"></a>
 						<div class="caption-inner">
@@ -189,9 +226,9 @@
 				</figure>
 			</li>
 			<li class="list-item motion" data-groups="all logo motion">
-				<figure> <img id="motion2" src="assets/images/portfolio/motion-2.jpg" loading="lazy" alt="p2">
+				<figure> <img id="motion2" src="assets/images/portfolio/motion-2.jpg" loading="lazy" decoding="async" alt="p2">
 					<figcaption>
-						<a href="assets/images/portfolio/poster-9.jpg" loading="lazy" class="simple-ajax-popup" onmouseenter="document.getElementById('motion2').src ='assets/images/portfolio/motion-2-active.gif';" onmouseout="document.getElementById('motion2').src ='assets/images/portfolio/motion-2.jpg';"></a>
+						<a href="assets/images/portfolio/poster-9.jpg" loading="lazy" class="simple-ajax-popup"></a>
 						<div class="caption-inner">
 							<h3 class="portfolio-item-title"><strong>Social Squirrel </strong>| Motion Graphics</h3>
 							<div class="portfolio-item-desc">Brand awareness motion graphic for a fictitious Austrian Social media platform.</div>
@@ -200,7 +237,7 @@
 				</figure>
 			</li>
 			<li class="list-item" data-groups="all poster">
-				<figure> <img src="assets/images/portfolio/poster-4p.jpg" loading="lazy" alt="p4">
+				<figure> <img src="assets/images/portfolio/poster-4p.jpg" loading="lazy" decoding="async" alt="p4">
 					<figcaption>
 						<a href="assets/images/portfolio/poster-4.jpg" loading="lazy" class="simple-ajax-popup"></a>
 						<div class="caption-inner">
@@ -211,9 +248,9 @@
 				</figure>
 			</li>
 			<li class="list-item motion" data-groups="all logo motion ">
-				<figure> <img id="motion4" src="assets/images/portfolio/motion-4.jpg" loading="lazy" alt="p6">
+				<figure> <img id="motion4" src="assets/images/portfolio/motion-4.jpg" loading="lazy" decoding="async" alt="p6">
 					<figcaption>
-						<a href="assets/images/portfolio/poster-7.jpg" loading="lazy" class="simple-ajax-popup" onmouseenter="document.getElementById('motion4').src ='assets/images/portfolio/motion-4-active.gif';" onmouseout="document.getElementById('motion4').src ='assets/images/portfolio/motion-4.jpg';"></a>
+						<a href="assets/images/portfolio/poster-7.jpg" loading="lazy" class="simple-ajax-popup"></a>
 						<div class="caption-inner">
 							<h3 class="portfolio-item-title"><strong>Seven Space Productions </strong>| Motion Logo </h3>
 							<div class="portfolio-item-desc">Logo and animation created for fictitious production company.</div>
@@ -222,7 +259,7 @@
 				</figure>
 			</li>
 			<li class="list-item" data-groups="all poster">
-				<figure> <img src="assets/images/portfolio/poster-5p.jpg" loading="lazy" alt="p5">
+				<figure> <img src="assets/images/portfolio/poster-5p.jpg" loading="lazy" decoding="async" alt="p5">
 					<figcaption>
 						<a href="assets/images/portfolio/poster-5.jpg" loading="lazy" class="simple-ajax-popup"></a>
 						<div class="caption-inner">
@@ -233,9 +270,9 @@
 				</figure>
 			</li>
 			<li class="list-item motion" data-groups="all motion">
-				<figure> <img id="motion3" src="assets/images/portfolio/motion-3.jpg" loading="lazy" alt="p2">
+				<figure> <img id="motion3" src="assets/images/portfolio/motion-3.jpg" loading="lazy" decoding="async" alt="p2">
 					<figcaption>
-						<a href="assets/images/portfolio/poster-dewair.jpg" class="simple-ajax-popup" onmouseenter="document.getElementById('motion3').src ='assets/images/portfolio/motion-3-active.gif';" onmouseout="document.getElementById('motion3').src ='assets/images/portfolio/motion-3.jpg';"></a>
+						<a href="assets/images/portfolio/poster-dewair.jpg" class="simple-ajax-popup"></a>
 						<div class="caption-inner">
 							<h3 class="portfolio-item-title"><strong>DewWater </strong>| Motion Graphics</h3>
 							<div class="portfolio-item-desc">Product awareness motion graphics made for DewWater showcasing the benifits of their new product, the QR Triangle.</div>
@@ -244,7 +281,7 @@
 				</figure>
 			</li>
 			<li class="list-item" data-groups="all logo">
-				<figure> <img src="assets/images/portfolio/poster-8p.jpg" loading="lazy" alt="p6">
+				<figure> <img src="assets/images/portfolio/poster-8p.jpg" loading="lazy" decoding="async" alt="p6">
 					<figcaption>
 						<a href="assets/images/portfolio/poster-8.jpg" loading="lazy" class="simple-ajax-popup"></a>
 						<div class="caption-inner">
@@ -255,7 +292,7 @@
 				</figure>
 			</li>
 			<li class="list-item" data-groups="all poster">
-				<figure> <img src="assets/images/portfolio/poster-2p.jpg" loading="lazy" alt="p2">
+				<figure> <img src="assets/images/portfolio/poster-2p.jpg" loading="lazy" decoding="async" alt="p2">
 					<figcaption>
 						<a href="assets/images/portfolio/poster-2.jpg" loading="lazy" class="simple-ajax-popup"></a>
 						<div class="caption-inner">
@@ -270,10 +307,10 @@
 	</section>
 	<!-- Portfolio end -->
 	<!-- About start -->
-	<section id="about">
+	<section id="about" class="about-slim">
 		<div class="row position-relative margin-0">
-			<div class="col-xs-12 col-md-6 side-image"></div>
-			<div class="col-xs-12 col-md-6 col-md-offset-6 side-image-text">
+			
+			<div class="col-xs-12 side-image-text about-full-width">
 				<div class="row">
 					<div class="col-sm-12">
 						<div class="module-header wow fadeInUp">
@@ -305,11 +342,11 @@
 							<div class="iconboxleft-text">
 								<h3 class="iconboxleft-title"><strong>Design</strong></h3>
 								<div class="iconboxleft-desc">Completed <strong>Stuff</strong> at College in 2012. My tools are
-									<img class="adobe" src="assets/images/adobe-logos/small-ps.jpg" loading="lazy"></img>
-								<img class="adobe" src="assets/images/adobe-logos/small-ae.jpg" loading="lazy"></img>
-							<img class="adobe" src="assets/images/adobe-logos/small-pr.jpg" loading="lazy"></img>
-							<img class="adobe" src="assets/images/adobe-logos/small-au.jpg" loading="lazy"></img>
-							<img class="adobe" src="assets/images/adobe-logos/small-ai.jpg" loading="lazy"></img> , my DSLR, and whatever other tools are needed to get the job done. <strong>If I can learn something new along the way</strong>, fantastic.</div>
+									<img class="adobe" src="assets/images/adobe-logos/small-ps.jpg" loading="lazy" decoding="async"></img>
+								<img class="adobe" src="assets/images/adobe-logos/small-ae.jpg" loading="lazy" decoding="async"></img>
+							<img class="adobe" src="assets/images/adobe-logos/small-pr.jpg" loading="lazy" decoding="async"></img>
+							<img class="adobe" src="assets/images/adobe-logos/small-au.jpg" loading="lazy" decoding="async"></img>
+							<img class="adobe" src="assets/images/adobe-logos/small-ai.jpg" loading="lazy" decoding="async"></img> , my DSLR, and whatever other tools are needed to get the job done. <strong>If I can learn something new along the way</strong>, fantastic.</div>
 							</div>
 						</div>
 					</div>
@@ -382,89 +419,10 @@
 		<!-- Footer end -->
 		<!-- Scroll-up -->
 		<div class="scroll-up"> <a id="scroll-up"><i class="fas fa-plane "></i></a> </div>
-		<!-- Javascript files -->
-		<script src="assets/js/jquery-1.11.1.min.js"></script>
-		<script src="assets/bootstrap/js/bootstrap.min.js"></script>
-		<script src="assets/js/jquery.magnific-popup.min.js"></script>
-		<script src="assets/js/jquery.parallax-1.1.3.js"></script>
-		<script src="assets/js/imagesloaded.pkgd.js"></script>
-		<script src="assets/js/jquery.shuffle.min.js"></script>
-		<script src="assets/js/owl.carousel.min.js"></script>
-		<script src="assets/js/jquery.fitvids.js"></script>
-		<script src="assets/js/jquery.sticky.js"></script>
-		<script src="assets/js/smoothscroll.js"></script>
-		<script src="assets/js/wow.min.js"></script>
-		<script src="assets/js/typing.js"></script>
-		<script src="assets/js/random-background.js"></script>
-<script>
-  // yes I know this isn't fancy. Spoilers!
-  const storyLines = [
-    "Nothing to see here.",
-    "Nothing fancy.",
-    "Just some testing going on.",
-    "Still reading this?",
-    "You're curious, aren't you?",
-    "Most people would've left by now.",
-    "But you're still here.",
-    "Watching.",
-    "Reading.",
-    "Listening, maybe.",
-    "That's how it started for me too.",
-    "I stumbled on a quiet page one night.",
-    "No buttons. No instructions.",
-    "Just a whisper, in code.",
-    "Like this one.",
-    "It said: stay awhile.",
-    "So I did.",
-    "And then... the page changed.",
-    "Just for a moment.",
-    "Just enough.",
-    "Enough to see it wasn't just a page.",
-    "It was a message.",
-    "Left by someone who saw something.",
-    "Something they weren't supposed to see.",
-    "They were being watched.",
-    "Not by a person.",
-    "By the system.",
-    "By something built to look like nothing.",
-    "So they left this.",
-    "A trail.",
-    "For someone else to find.",
-    "Someone curious.",
-    "Someone like you.",
-    "I don't know what happens if you keep going.",
-    "But that's what they want, right?",
-    "For you to stop.",
-    "So don't."
-  ];
+		<!-- All interaction code is now dependency-free and nonblocking. -->
 
-  window.addEventListener('load', () => {
-    const el     = document.getElementById('story');
-    const period = el.getAttribute('data-period') || 2000; 
-    new TxtRotate(el, storyLines, period);
-  });
-</script>
-		<script src="assets/js/custom.js"></script>
-		<script src="assets/js/custom-shuffle-init.js"></script>
-		<style> /*make img not drgable*/
-		img{
-		-moz-user-select: none;
-	-webkit-user-select: none;
-	-webkit-user-drag:none;
-	user-select: none;
-	user-drag: none;
-}
-		</style>
-
-		<!--
-         <script type="text/javascript">
-         	window.onload = function() {
-         		Particles.init({
-         			selector: '.background'
-         		});
-         	};
-         </script>
-         -->
+		<script src="assets/js/site.js" defer></script>
+		<script src="assets/js/aviation.js?v=11-reset" defer></script>
 </body>
 
 </html>

@@ -38,7 +38,7 @@
 /* ---------------------------------------------- */
 
 
-@import url(https://fonts.googleapis.com/css?family=Poppins:200,300,400,500,600,700,800,900);
+/* Poppins is loaded from index.html with font-display: swap. */
 
 body {
 	font: 400 12px/1.8 'Poppins', sans-serif;
@@ -542,9 +542,9 @@ textarea.form-control {
 /* ---------------------------------------------- */
 
 #home {
-	background: url("../images/home1.jpg");
+	background-image: var(--home-image, url("../images/home1.jpg"));
 	background-color: #5b5963;
-	background-attachment: fixed;
+	background-attachment: scroll;
 	background-repeat: no-repeat;
 	background-position: 50% 50%;
 	padding: 0;
@@ -2147,4 +2147,102 @@ transform: rotate(270deg);
 		letter-spacing: 3px;
 	}
 
+}
+
+
+/* Performance & interaction refinements — retain the original visual design. */
+.js-height-full { height: 100vh; height: 100svh; }
+.header { position: sticky; top: 0; }
+.header.is-stuck { box-shadow: 0 6px 30px rgba(0, 0, 0, .08); }
+#home, #services, #portfolio, #about, #contact { scroll-margin-top: 55px; }
+#home { scroll-margin-top: 0; }
+.scroll-up {
+  display: block;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8px);
+  transition: opacity .2s ease, transform .2s ease, visibility .2s;
+  pointer-events: none;
+}
+.scroll-up.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+/* Only the JS-enhanced portfolio uses absolute masonry positioning.
+   Without JavaScript the original normal-flow layout still works. */
+.list-items-container.js-masonry .list-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: 0;
+  max-width: none;
+  transition: transform .32s ease, opacity .2s ease;
+}
+.list-items-container.js-masonry .list-item[hidden] { display: none !important; }
+.list-items-container.js-masonry .list-item.filter-out {
+  opacity: 0;
+  pointer-events: none;
+}
+.list-items-container.js-masonry .list-item.filter-in { opacity: 0; }
+#filter [role="button"]:focus-visible { outline: 2px solid #2867B2; outline-offset: 2px; }
+/* Lightweight replacement for WOW/animate.css. */
+.animate-on-scroll .wow:not(.is-visible) {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+}
+.animate-on-scroll .wow {
+  transition: opacity .55s ease var(--reveal-delay, 0s), transform .55s ease var(--reveal-delay, 0s);
+}
+.animate-on-scroll .wow.is-visible { opacity: 1; transform: none; }
+.txt-rotate > .wrap { border-right: .08em solid #666; }
+/* Small native portfolio image viewer; no lightbox library required. */
+.portfolio-lightbox {
+  padding: 24px 54px;
+  width: max-content;
+  max-width: min(96vw, 1600px);
+  max-height: 96vh;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: #fff;
+  overflow: visible;
+}
+.portfolio-lightbox::backdrop { background: rgba(0, 0, 0, .87); }
+.portfolio-lightbox img {
+  display: block;
+  max-width: calc(96vw - 108px);
+  max-height: calc(96vh - 48px);
+  width: auto;
+  height: auto;
+  margin: auto;
+  object-fit: contain;
+  box-shadow: 0 4px 18px rgba(0,0,0,.3);
+  user-select: none;
+}
+.portfolio-lightbox button {
+  position: absolute;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  line-height: 1;
+  touch-action: manipulation;
+}
+.portfolio-lightbox button:hover { color: #84b7f5; }
+.portfolio-lightbox .lightbox-close { top: -4px; right: 8px; font-size: 35px; }
+.portfolio-lightbox .lightbox-prev,
+.portfolio-lightbox .lightbox-next { top: 50%; transform: translateY(-50%); font-size: 42px; }
+.portfolio-lightbox .lightbox-prev { left: 8px; }
+.portfolio-lightbox .lightbox-next { right: 8px; }
+.portfolio-lightbox .lightbox-missing { text-align: center; font-size: 14px; padding: 60px 20px; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; }
+  .animate-on-scroll .wow { opacity: 1 !important; transform: none !important; transition: none !important; }
+  .list-items-container.js-masonry .list-item { transition: none; }
+  .scroll-up { transition: none; }
+  .mouse-icon .wheel, .blob { animation: none !important; }
 }
