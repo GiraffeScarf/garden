@@ -114,6 +114,19 @@
               <div class="flight-control-row"><span id="night-steer-output">WINGS LEVEL</span><div class="flight-control-bar"><span class="flight-control-marker" id="night-steer-marker"></span></div><div class="flight-control-axis"><span>◀ LEFT</span><span>RIGHT ▶</span></div></div>
               <div class="flight-control-row"><span id="night-sink-output">NOMINAL DESCENT · 100%</span><div class="flight-control-bar flight-control-sink"><span class="flight-control-marker" id="night-sink-marker"></span></div><div class="flight-control-axis"><span>↑ SLOWER</span><span>FASTER ↓</span></div></div>
             </div><div class="approach-instrument-face"><div class="instrument-ref instrument-ref-v"></div><div class="instrument-ref instrument-ref-h"></div><div class="instrument-needle instrument-needle-v" id="night-loc-needle"></div><div class="instrument-needle instrument-needle-h" id="night-gs-needle"></div><div class="instrument-aircraft">✈</div></div><div class="approach-instrument-readout"><span id="night-instrument-loc">LOC · CENTRED</span><span id="night-instrument-gs">GS · ON PROFILE</span></div></div>
+		<div class="sector-complete" id="sector-complete" role="dialog" aria-modal="true" aria-labelledby="sector-complete-title" hidden>
+            <div class="sector-complete-card">
+                <span class="sector-complete-kicker">✦ TERMINAL CONTROL · SHIFT SUMMARY</span>
+                <h2 id="sector-complete-title">SECTOR CLEARED. NICE WORK, CONTROLLER!</h2>
+                <p id="sector-complete-text">All aircraft have been handed off.</p>
+                <div class="sector-complete-stats" id="sector-complete-stats">TOWER 0 · DEPARTURE 0 · CENTRE 0</div>
+                <p class="sector-complete-aside">Your headset has been cleared for a well-deserved coffee break.</p>
+                <div class="sector-complete-actions">
+                    <button type="button" id="sector-complete-restart">ANOTHER SHIFT</button>
+                    <button type="button" id="sector-complete-dismiss">KEEP WATCHING</button>
+                </div>
+            </div>
+        </div>
 		<div class="game-popup" id="game-popup" role="dialog" aria-modal="true" aria-labelledby="game-popup-title" hidden>
             <div class="game-popup-content"><span id="game-popup-kicker">NOTICE OF RE-EVALUATION</span><h2 id="game-popup-title">YOUR ATC LICENCE HAS BEEN REVOKED</h2><p id="game-popup-message">Two incidents. The paperwork now has its own paperwork.</p><p id="game-popup-authority">Aviation Authority · Regional office</p><p class="game-popup-privacy">Country is looked up from your IP only when this notice appears. The lookup may contact country.is; no IP or location is stored by this site. This is a fictional game.</p><div class="game-popup-actions"><button id="game-restart" type="button">REQUEST A SECOND CHANCE</button><button id="game-dismiss" type="button">ACCEPT THE SHAME</button></div></div>
         </div>

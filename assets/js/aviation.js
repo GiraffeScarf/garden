@@ -20,7 +20,7 @@
     const angleError = (to, from) => ((to - from + 540) % 360) - 180;
     const themeKeys = { a: 'sky', s: 'radar', d: 'night' };
     const validThemes = new Set(Object.values(themeKeys));
-    const TRAFFIC_RATE = 0.35; // User-selected slower terminal radar simulation
+    const TRAFFIC_RATE = 0.55; // User-selected slower terminal radar simulation
     const AIRPORT_X = .58, AIRPORT_Y = .52;
     // Fictional scope scale: the thin approach ring is labelled 5 NM.
     const AIRPORT_5NM_SCREEN_RADIUS = .085;
@@ -56,6 +56,12 @@
     let simTime = 0, paused = false;
     let selected = null, drag = null, alertState = 'clear', lastStatusUpdate = -1000;
     let incidents = 0, lastConflictPhrase = '', nextTrack = 1, licenseNotified = false;
+    const sectorStats = { tower: 0, departure: 0, centre: 0 };
+    let sectorCompleteShown = false;
+    const sectorComplete = document.getElementById('sector-complete');
+    const sectorCompleteTitle = document.getElementById('sector-complete-title');
+    const sectorCompleteText = document.getElementById('sector-complete-text');
+    const sectorCompleteStats = document.getElementById('sector-complete-stats');
     const wrecks = [];
     const licensePopup = document.getElementById('game-popup');
     const popupAuthority = document.getElementById('game-popup-authority');
@@ -499,6 +505,7 @@
       drag = null; pointer.active = false;
       nightYoke.classList.remove('is-visible');
       if (next !== 'night') approachMessage.hidden = true;
+      if (next !== 'radar') sectorComplete.hidden = true;
       if (next === 'night' && previousTheme !== 'night') { resetApproach(); if(tilt.enabled) recalibrateTilt(); }
       if (next !== 'radar') setRadarDrawer(false);
       if (storyInitialized) { showLeg(0); reconcileStoryTimer(); }
@@ -762,6 +769,7 @@
       if (t.crashed || t.handoff) return;
       t.handoff = kind;
       t.handoffUntil = simTime + HANDOFF_HOLD_SECONDS;
+      sectorStats[kind]++;
       const isTower = kind === 'tower';
       const unit = isTower ? 'Tower' : kind === 'departure' ? 'Departure' : 'Centre';
       const frequency = isTower ? '123.45' : kind === 'departure' ? '124.70' : '132.80';
@@ -816,8 +824,33 @@
         }
       }
       updateAlert(false);
+      checkSectorComplete();
       if (selected) updateAltitudeReadout();
     }
+    function checkSectorComplete() {
+      if (sectorCompleteShown || licenseNotified || !sectorComplete.hidden) return;
+      const successfulHandoffs = sectorStats.tower + sectorStats.departure + sectorStats.centre;
+      // Wait until the final completed handoff has disappeared after its radio call.
+      // Crashed tracks remain in the array, so they are excluded from the active count.
+      if (!successfulHandoffs || flights.some(t => !t.crashed)) return;
+      sectorCompleteShown = true;
+      const cleanShift = incidents === 0;
+      sectorComplete.dataset.result = cleanShift ? 'clear' : 'paperwork';
+      sectorCompleteTitle.textContent = cleanShift ? 'SECTOR CLEARED. NICE WORK, CONTROLLER!' : 'SECTOR EMPTY. ABOUT THAT PAPERWORK…';
+      sectorCompleteText.textContent = cleanShift
+        ? `You safely handed off ${successfulHandoffs} aircraft. Nobody had to copy a number. An aviation miracle.`
+        : `${successfulHandoffs} aircraft handed off, ${incidents} incident${incidents===1?'':'s'}. The relief controller has some questions.`;
+      sectorCompleteStats.textContent = `TOWER ${sectorStats.tower}  ·  DEPARTURE ${sectorStats.departure}  ·  CENTRE ${sectorStats.centre}`;
+      commReadout.textContent = cleanShift
+        ? 'ATC: Sector clear. The next controller would like your secret.'
+        : 'ATC: Sector clear. The occurrence report would like a word.';
+      sectorComplete.hidden = false;
+      if (isTouchUI()) setRadarDrawer(false);
+      document.getElementById('sector-complete-restart').focus({ preventScroll:true });
+    }
+    function dismissSectorComplete() { sectorComplete.hidden = true; }
+    document.getElementById('sector-complete-restart').addEventListener('click', resetRadar);
+    document.getElementById('sector-complete-dismiss').addEventListener('click', dismissSectorComplete);
     function velocity(t) {
       const pps = t.baseVelocity * width * (t.speed / t.baseSpeed);
       return { x: Math.sin(t.bearing * rad) * pps, y: -Math.cos(t.bearing * rad) * pps };
@@ -827,6 +860,9 @@
         speech: '', speechUntil:0, conflict:'clear', previousAlert:'clear', enteredSector:true, handoff:null, handoffUntil:0})));
       wrecks.length = 0;
       incidents = 0;
+      sectorStats.tower = sectorStats.departure = sectorStats.centre = 0;
+      sectorCompleteShown = false;
+      sectorComplete.hidden = true;
       licenseNotified = false;
       paused = false;
       nextTrack = 1;
@@ -846,8 +882,16 @@
     document.getElementById('radar-reset').addEventListener('click', resetRadar);
     document.getElementById('game-restart').addEventListener('click', resetRadar);
     document.getElementById('game-dismiss').addEventListener('click', () => { licensePopup.hidden=true; });
+    function headingToAirport(x,y) {
+      // Bearing is screen-space: the scope has an aspect ratio, but aircraft use
+      // true compass headings for their motion (000=up, 090=right).
+      const dx = (AIRPORT_X - x) * width;
+      const dy = (AIRPORT_Y - y) * height;
+      return (Math.atan2(dx, -dy) / rad + 360) % 360;
+    }
     function createEdgeSpawn() {
-      const live = flights.filter(t => !t.crashed);
+      const live = flights.filter(t => !t.crashed && !t.handoff);
+      let candidate;
       for (let attempt = 0; attempt < 25; attempt++) {
         const side = Math.floor(Math.random() * 4);
         let x, y;
@@ -855,31 +899,36 @@
         else if (side === 1) { x = 1.08; y = .08 + Math.random() * .84; }
         else if (side === 2) { x = .08 + Math.random() * .84; y = -.10; }
         else { x = .08 + Math.random() * .84; y = 1.10; }
-        const targetX = .44 + Math.random() * .24;
-        const targetY = .36 + Math.random() * .30;
-        const bearing = (Math.atan2(targetX - x, -(targetY - y)) / rad + 360) % 360;
         const tooClose = live.some(t => Math.hypot((t.x - x) * width, (t.y - y) * height) < 120);
-        if (tooClose) continue;
-        const baseSpeed = 210 + Math.round(Math.random() * 28);
-        const baseLevel = 60 + Math.round(Math.random() * 10) * 10;
-        return { x, y, bearing, baseSpeed, baseLevel };
+        candidate = { x, y };
+        if (!tooClose) break;
       }
-      return { x: -.08, y: .24 + Math.random() * .5, bearing: 90, baseSpeed: 220, baseLevel: 90 };
+      // Always within ±30° of the centre-airport bearing, even after fallback.
+      const bearing = (headingToAirport(candidate.x,candidate.y) + (Math.random()*60 - 30) + 360) % 360;
+      return { ...candidate, bearing, baseSpeed: 210 + Math.round(Math.random()*28),
+        baseLevel: 60 + Math.round(Math.random()*10)*10 };
     }
-    document.getElementById('radar-add').addEventListener('click', () => {
+    function addTraffic() {
       if (licenseNotified) return;
-      if (flights.filter(t=>!t.crashed && !t.handoff).length >= 20) { commReadout.textContent = 'ATC: Airspace full. Please stop collecting airplanes.'; return; }
+      if (flights.filter(t=>!t.crashed && !t.handoff).length >= 20) {
+        commReadout.textContent = 'ATC: Airspace full. Please stop collecting airplanes.';
+        return;
+      }
+      dismissSectorComplete();
+      sectorCompleteShown = false; // Another wave can earn another completion notice.
       const index = nextTrack++;
       const spawn = createEdgeSpawn();
       const t = { callsign:`SIM${String(700+index)}`, x:spawn.x, y:spawn.y,
         bearing:spawn.bearing, targetBearing:spawn.bearing,
         level:spawn.baseLevel, targetLevel:spawn.baseLevel, speed:spawn.baseSpeed, targetSpeed:spawn.baseSpeed, baseSpeed:spawn.baseSpeed,
         baseVelocity:.008 * TRAFFIC_RATE, trail:[],trailClock:0, conflict:'clear', crashed:false,
-        speech:'Checking in from the edge of the map. Please be gentle.',speechUntil:simTime+3,previousAlert:'clear', enteredSector:false, handoff:null, handoffUntil:0};
+        speech:'Checking in from the edge of the map. Please be gentle.',speechUntil:simTime+3,
+        previousAlert:'clear', enteredSector:false, handoff:null, handoffUntil:0};
       flights.push(t);
-      commReadout.textContent=`ATC: ${t.callsign} entering from the sector edge at FL${flightLevel(t.level)}.`;
+      commReadout.textContent=`ATC: ${t.callsign} entering toward the field at heading ${heading(t.bearing)}°, FL${flightLevel(t.level)}.`;
       if (reduced.matches) render();
-    });
+    }
+    document.getElementById('radar-add').addEventListener('click', addTraffic);
     async function showLicenseReview() {
       licensePopup.hidden = false;
       licenseNotified = true;
